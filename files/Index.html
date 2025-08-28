@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>File Browser</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        ul { list-style-type: none; padding-left: 0; }
+        li { margin: 4px 0; }
+        a { text-decoration: none; color: blue; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>File Browser</h2>
+    <div id="current-path"></div>
+    <ul id="file-list"></ul>
+    <script>
+        let currentDir = '';
+        function fetchList(dir = '') {
+            fetch(`/list?dir=${encodeURIComponent(dir)}`)
+                .then(res => res.json())
+                .then(data => {
+                    currentDir = data.path;
+                    document.getElementById('current-path').textContent = 'Current Directory: /' + (currentDir || '');
+                    const ul = document.getElementById('file-list');
+                    ul.innerHTML = '';
+                    if (currentDir) {
+                    
+                        const upDir = currentDir.split(pathSep()).slice(0, -1).join(pathSep());
+                        const li = document.createElement('li');
+                        li.innerHTML = `<a onclick="fetchList('${upDir}')">[..]</a>`;
+                        ul.appendChild(li);
+                    }
+                    data.entries.forEach(entry => {
+                        const li = document.createElement('li');
+                        if (entry.isDirectory) {
+                            li.innerHTML = `<a onclick="fetchList('${joinPath(currentDir, entry.name)}')">[${entry.name}]</a>`;
+                        } else {
+                            li.textContent = entry.name;
+                        }
+                        ul.appendChild(li);
+                    });
+                });
+        }
+
+        function pathSep() {
+            return '\\'; 
+        }
+
+        function joinPath(base, name) {
+            if (!base) return name;
+            return base + pathSep() + name;
+        }
+
+        fetchList();
+    </script>
+</body>
+</html>
